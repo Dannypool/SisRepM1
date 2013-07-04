@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+		<title>Reporte Ciudadano</title>
+		<meta name="description" content="" />
+		<meta content="initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+		<!-- Replace favicon.ico & apple-touch-icon.png in the root of your domain and delete these references -->
+		<link rel="stylesheet" href="themes/Bootstrap.css">
+                <link rel="stylesheet" href="js/jquery.mobile.structure-1.3.1.min.css" />
+		<link rel="stylesheet" href="themes/jqm-icon-pack-2.1.2-fa.css">
+		<script src="js/jquery-1.9.1.min.js"></script>
+		<script src="js/jquery.mobile-1.3.1.min.js"></script>
+		<script type="text/javascript">
+			var latitud =0;
+			var longitud =0;
+			var geocoder;
+			var content;
+			var idUs;
+			$(document).ready(function() {
+			 	$("#categorias").load("http://148.204.64.74/SisRep/Mobile_reporteador/php/categoria.php", function(){
+			 		$("#categorias").trigger('create');
+
+			 	});
+			 	getLocation();
+			 	
+			});
+			function loadSubcat(id){
+				$.post('http://148.204.64.74/SisRep/Mobile_reporteador/php/cat_Sub.php',
+				{
+				  'idCat': id
+				},
+				function(data){
+				  $('#content-subcat').html(data);
+				  $("#subcat").trigger('create');
+				}
+				);
+				getLocation();
+			}
+
+			function crearReporte(idCat,idSub){
+				//alert(latitud +","+longitud+","+content)
+				
+				$.post('http://148.204.64.74/SisRep/Mobile_reporteador/php/crear_reporte.php',
+				{
+				  'latitud': latitud, 'longitud':longitud ,'idcat': idCat, 'direccion': content,'idsub': idSub, 'idUsuario': idUs
+				},
+				function(data){
+				  //alert(data);
+				  document.location.href="#home";
+				}
+				);
+
+			}
+
+			function comprobarUbicacion(id){
+				if (latitud==0 && latitud==0 ) {
+					alert("No tienes permisos de localizacion, favor de aceptarlos");
+
+				} else{
+
+					loadSubcat(id);
+					document.location.href="#subcat";
+
+				};
+
+			}
+
+			function validarUsuario(){
+				var usuario= $('#usuario').val();
+				var pass= $('#pass').val();
+				$.post('http://148.204.64.74/SisRep/Mobile_reporteador/php/validar_usuario.php',
+				{
+				  'usuario': usuario, 'pass': pass
+				},
+				function(data){
+				  if (data=='error') {
+				  	alert("Usuario invalido");
+				  } else{
+				  	idUs=data;
+				  	document.location.href="#home";
+
+				  };
+				  
+				}
+				);
+			}
+
+
+			
+		</script>
+
+		<script>
+		
+		function getLocation()
+		  {
+		  if (navigator.geolocation)
+		    {
+		    navigator.geolocation.getCurrentPosition(showPosition);
+		    }
+		  else{
+		  	$('#content-posicion').html("Geolocation is not supported by this browser.");
+		  }
+		  }
+		 	
+		</script>
+
+		<!-- mapa!!! -->
+		<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=true&language=es"></script>
+		 <script type="text/javascript" src="js/ui/jquery.ui.map.js"></script>
+		<script type="text/javascript">
+
+		function showPosition(position){
+			longitud =position.coords.longitude;
+			latitud = position.coords.latitude;
+			
+			getAddress(new google.maps.LatLng(latitud,longitud));
+			//setTimeout(function(){alert(direccion)},3000);
+
+		}
+
+		
+
+		function getAddress(latLng) {
+		// Check to see if a geocoder object already exists
+
+		//esperando ubicacion
+		$.mobile.loading('show', {
+				text : 'Determinando ubicación...',
+				textVisible : true,
+				theme : 'a',
+				html : ""
+			});
+//
+		if (!geocoder) {
+			geocoder = new google.maps.Geocoder();
+		}
+		// Creating a GeocoderRequest object
+		var geocoderRequest = {
+			latLng: latLng
+		}
+		geocoder.geocode(geocoderRequest, function(results, status) {
+			
+
+			
+
+			if (status == google.maps.GeocoderStatus.OK) {
+			// Looping through the results
+			content=results[0].formatted_address;
+			
+		} else {
+			content = 'No se pudo encontrar direccion';
+		}
+			//document.getElementById('direccion').innerHTML=content+latLng;
+			$('#direccion').text(content);
+			
+			$.mobile.loading("hide"); //loading
+
+						//alert(content);
+		});
+		}
+
+
+		</script>
+		
+		 
+	</head>
+
+
+
+
+
+	<body>
+
+		<div data-role="page" id="login" data-theme="e">
+			<div data-role="header" data-position="inline" data-theme="e">
+				<h1>Reporte ciudadano</h1>
+			</div>
+			<div data-role="content" id='conten-login' class="text-center">
+				
+				
+					<h3>Ingrese su usuario y contraseña</h3>
+					<div data-role="fieldcontain">
+						
+						<h4 for="name">Usuario</h4>
+						<input type="text" name="usuario" id="usuario" value=""  />
+						
+						
+						<h4 for="pass">Contraseña</h4>
+						<input type="text" name="pass" id="pass" value=""  />
+					</div>
+					<button type="submit" data-icon="check" data-theme="d" onclick='validarUsuario()'>Acceder</button>
+					
+
+				
+				
+				
+				
+			</div><!--fin data-role-contenedor-->
+			
+			
+		</div>
+
+
+		<div data-role="page" id="home" data-theme="e">
+			<div data-role="header" data-position="inline" data-theme="e">
+				<h1>Reporte ciudadano</h1>
+			</div>
+			<div data-role="content" id='categorias' class="text-center">
+				
+				
+				
+				
+				
+			</div><!--fin data-role-contenedor-->
+			
+			
+		</div>
+
+		<div data-role="page" id="subcat" data-theme="e">
+			<div data-role="header" data-position="inline" data-theme="e">
+				<a href="#home" data-icon="home" data-iconpos='notext'></a>
+				<h1>Reporte ciudadano</h1>
+				
+			</div>
+			<div data-role="content" id='content-subcat' class="text-center">
+				
+				
+				
+				
+				
+			</div><!--fin data-role-contenedor-->
+			<div data-role="content" class="text-center">
+				<h4>Ubicaci&oacute;n</h4>
+				<label id='direccion'></label>
+			</div>
+			
+				
+		</div>
+
+		
+		
+		
+		
+		
+		
+
+		
+		
+	</body>
+</html>
